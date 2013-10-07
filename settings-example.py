@@ -53,7 +53,7 @@ class dev():
 	lens_domain_name = 'd32g8kubfuccxs.cloudfront.net'
 	
 	# EJP S3 settings
-	bucket = 'elife-ejp-ftp-dev'
+	ejp_bucket = 'elife-ejp-ftp-dev'
 	
 	# Logging
 	setLevel = "INFO"
@@ -100,7 +100,7 @@ class live():
 	cdn_domain_name = 'lens.elifesciences.org'
 	
 	# EJP S3 settings
-	bucket = 'elife-ejp-ftp'
+	ejp_bucket = 'elife-ejp-ftp'
 	
 	# Logging
 	setLevel = "INFO"
