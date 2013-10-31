@@ -5,6 +5,8 @@ import calendar
 import time
 from operator import itemgetter, attrgetter
 
+import csv
+
 import boto.s3
 from boto.s3.connection import S3Connection
 
@@ -36,8 +38,8 @@ class EJP(object):
     self.fs = None
     
     # Some EJP file types we expect
-    self.latest_author_file = None
-    self.latest_editor_file = None
+    self.author_default_filename = "authors.csv"
+    self.editor_default_filename = "editors.csv"
     
   def connect(self):
     """
@@ -77,7 +79,7 @@ class EJP(object):
     return s3key
 
 
-  def parse_author_file(self, document):
+  def parse_author_file(self, document, filename = None):
     """
     Given a filename to an author file, download
     or copy it using the filesystem provider,
@@ -87,23 +89,121 @@ class EJP(object):
     if(self.fs is None):
       self.fs = self.get_fs()
     
-    self.fs.write_document_to_tmp_dir(document)
-    content = self.fs.read_document_from_tmp_dir(self.fs.document)
+    # Save the document to the tmp_dir
+    self.fs.write_document_to_tmp_dir(document, filename)
+
+    (column_headings, author_rows) = self.parse_author_data(self.fs.document)
     
-    author_parsed = self.parse_author_data(author_data = content)
-    
-    return author_parsed
+    return (column_headings, author_rows)
   
-  def parse_author_data(self, author_data):
+  def parse_author_data(self, document):
     """
     Given author data - CSV with header rows - parse
     it and return an object representation
     """
     
-    #### TO DO !!!!!!!!
-    author_parsed = author_data
+    column_headings = None
+    author_rows = []
     
-    return author_parsed
+    f = self.fs.open_file_from_tmp_dir(self.fs.document, mode = 'rb')
+
+    filereader = csv.reader(f)
+
+    for row in filereader:
+      # For now throw out header rows
+      if(filereader.line_num <= 3):
+        pass
+      elif(filereader.line_num == 4):
+        # Column headers
+        column_headings = row
+      else:
+        author_rows.append(row)
+
+    return (column_headings, author_rows)
+  
+  def get_authors(self, doi_id = None, corresponding = None, document = None):
+    """
+    Get a list of authors for an article
+      If doi_id is None, return all authors
+      If corresponding is
+        True, return corresponding authors
+        False, return all but corresponding authors
+        None, return all authors
+      If document is None, find the most recent authors file
+    """
+    authors = []
+    # Check for the document
+    if(document is None):
+      # No document? Find it on S3, save the content to
+      #  the tmp_dir
+      if(self.fs is None):
+        self.fs = self.get_fs()
+      s3_key = self.find_latest_file(file_type = "author")
+      contents = s3_key.get_contents_as_string()
+      self.fs.write_content_to_document(contents, self.author_default_filename)
+      document = self.fs.get_document
+    
+    # Parse the author file
+    filename = self.author_default_filename
+    (column_headings, author_rows) = self.parse_author_file(document, filename)
+    
+    if(author_rows):
+      for a in author_rows:
+        add_author = True
+        # Check doi_id column value
+        if(doi_id is not None):
+          if(int(doi_id) != int(a[0])):
+            add_author = False
+        # Check corresponding column value
+        if(corresponding and add_author is True):
+          
+          author_type_cde = a[5]
+          dual_corr_author_ind = a[6]
+          is_corr = self.is_corresponding_author(author_type_cde, dual_corr_author_ind)
+          
+          if(corresponding is True):
+            # If not a corresponding author, drop it
+            if(is_corr is not True):
+              add_author = False
+          elif(corresponding is False):
+            # If is a corresponding author, drop it
+            if(is_corr is True):
+              add_author = False
+              
+        # Finish up, add the author if we should
+        if(add_author is True):
+          authors.append(a)
+
+    if(len(authors) <= 0):
+      authors = None
+    
+    return (column_headings, authors)
+    
+  def is_corresponding_author(self, author_type_cde, dual_corr_author_ind):
+    """
+    Logic for checking whether an author row is for
+    a corresponding author. Can be either "Corresponding Author"
+    or "dual_corr_author_ind" column is 1
+    """
+    is_corr = None
+    
+    if(author_type_cde == "Corresponding Author" or dual_corr_author_ind == "1"):
+      is_corr = True
+    else:
+      is_corr = False
+      
+    return is_corr
+    
+  def find_latest_file(self, file_type):
+    """
+    Given the file_type, find the S3 key of the object
+    for the latest file in the S3 bucket
+      file_type options: author, editor
+    """
+    
+    ####### TODo !!!!!!
+    
+    return s3_key
   
   def get_fs(self):
     """
