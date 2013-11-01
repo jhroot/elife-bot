@@ -6,6 +6,7 @@ import time
 from operator import itemgetter, attrgetter
 
 import csv
+import re
 
 import boto.s3
 from boto.s3.connection import S3Connection
@@ -46,6 +47,7 @@ class EJP(object):
     Connect to S3 using the settings
     """
     s3_conn = S3Connection(self.settings.aws_access_key_id, self.settings.aws_secret_access_key)
+    self.s3_conn = s3_conn
     return self.s3_conn
 
   def get_bucket(self, bucket_name = None):
@@ -66,15 +68,15 @@ class EJP(object):
 
     return bucket
 
-  def get_s3key(self, s3key, bucket = None):
+  def get_s3key(self, s3_key_name, bucket = None):
     """
     Get the S3 key from the bucket
     If the bucket is not provided, use the object bucket
     """
     if(bucket is None):
-      bucket = self.bucket
+      bucket = self.get_bucket()
     
-    s3key = boto.s3.key.Key(bucket)
+    s3key = bucket.get_key(s3_key_name)
     
     return s3key
 
@@ -138,7 +140,8 @@ class EJP(object):
       #  the tmp_dir
       if(self.fs is None):
         self.fs = self.get_fs()
-      s3_key = self.find_latest_file(file_type = "author")
+      s3_key_name = self.find_latest_s3_file_name(file_type = "author")
+      s3_key = self.get_s3key(s3_key_name)
       contents = s3_key.get_contents_as_string()
       self.fs.write_content_to_document(contents, self.author_default_filename)
       document = self.fs.get_document
@@ -194,16 +197,112 @@ class EJP(object):
       
     return is_corr
     
-  def find_latest_file(self, file_type):
+  def find_latest_s3_file_name(self, file_type, file_list = None):
     """
-    Given the file_type, find the S3 key of the object
-    for the latest file in the S3 bucket
+    Given the file_type, find the name of the S3 key for the object
+    that is the latest file in the S3 bucket
       file_type options: author, editor
+    Optional: for running tests, provide a file_list without connecting to S3
     """
     
-    ####### TODo !!!!!!
+    s3_key_name = None
     
-    return s3_key
+    # For each file_type, specify a unique file name fragment to filter on
+    #  with regular expression search
+    fn_fragment = {}
+    fn_fragment["author"] = "ejp_query_tool_query_id_152_15a"
+    fn_fragment["editor"] = "ejp_query_tool_query_id_158_15b"
+
+    if(file_list is None):
+      file_list = self.ejp_bucket_file_list()
+    
+    if(file_list):
+      good_file_list = []
+      pattern = fn_fragment[file_type]
+      # First copy all the good file names over
+      for s3_file in file_list:
+        if(re.search(pattern, s3_file["name"]) is not None):
+          good_file_list.append(s3_file)
+      # Second, sort by last_updated_timestamp
+      s = sorted(good_file_list, key=itemgetter('last_modified_timestamp'), reverse=True)
+      
+      if(len(s) > 0):
+        # We still have a list, take the name of the first one
+        s3_key_name = s[0]["name"]
+    
+    return s3_key_name
+  
+  def ejp_bucket_file_list(self):
+    """
+    Connect to the EJP bucket, as specified in the settings,
+    use boto to list all keys in the root of the bucket,
+    extract interesting values and collapse into JSON
+    so we can test it later
+    """
+    
+    bucket = self.get_bucket(self.settings.ejp_bucket)
+    
+    # List bucket contents
+    (keys, folders) = self.get_keys_and_folders(bucket)
+
+    attr_list = ['name','last_modified']
+    file_list = []
+
+    for key in keys:
+
+      item_attrs = {}
+      
+      for attr_name in attr_list:
+
+        raw_value = eval("key." + attr_name)
+        if(raw_value):
+          string_value = str(raw_value)
+          item_attrs[attr_name] = string_value
+          
+        try:
+          if(item_attrs['last_modified']):
+            # Parse last_modified into a timestamp for easy computations
+            date_format = "%Y-%m-%dT%H:%M:%S.000Z"
+            date_str = time.strptime(item_attrs['last_modified'], date_format)
+            timestamp = calendar.timegm(date_str)
+            item_attrs['last_modified_timestamp'] = timestamp
+        except KeyError:
+          pass
+
+      # Finally, add to the file list
+      if(len(item_attrs) > 0):
+        file_list.append(item_attrs)
+    
+    if(len(file_list) <= 0):
+      # Return None if no S3 keys were found
+      file_list = None
+    
+    return file_list
+    
+  def get_keys_and_folders(self, bucket, prefix = None, delimiter = '/', headers = None):
+    # Get "keys" and "folders" from the bucket, with optional
+    # prefix for the "folder" of interest
+    # default delimiter is '/'
+    
+    if(bucket is None):
+      return None
+  
+    folders = []
+    keys = []
+  
+    bucketList = bucket.list(prefix = prefix, delimiter = delimiter, headers = headers)
+  
+    for item in bucketList:
+      if(isinstance(item, boto.s3.prefix.Prefix)):
+        # Can loop through each prefix and search for objects
+        folders.append(item)
+        #print 'Prefix: ' + item.name
+      elif (isinstance(item, boto.s3.key.Key)):
+        keys.append(item)
+        #print 'Key: ' + item.name
+  
+    return keys, folders
+    
   
   def get_fs(self):
     """
@@ -226,3 +325,4 @@ class EJP(object):
       self.tmp_dir = self.tmp_dir_default
       
     return self.tmp_dir
+  

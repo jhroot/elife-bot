@@ -72,3 +72,20 @@ def i_have_corresponding(step, corr):
     world.corr = corr
     assert world.corr is not None, \
       "Got corr %s" % world.corr
+    
+@step('I have file type (\S+)')
+def i_have_file_type_file_type(step, file_type):
+  world.file_type = file_type
+  assert world.file_type is not None, \
+    "Got file_type %s" % world.file_type
+  
+@step('I find latest s3 file name using ejp')
+def i_find_latest_s3_file_name_using_ejp(step):
+  world.s3_file_name = world.ejp.find_latest_s3_file_name(world.file_type, world.json)
+  assert world.s3_file_name is not None, \
+    "Got s3_file_name %s" % world.s3_file_name
+    
+@step('I have s3 file name (\S+)')
+def i_have_s3_file_name_s3_file_name(step, s3_file_name):
+  assert world.s3_file_name == s3_file_name, \
+    "Got s3_file_name %s " % world.s3_file_name

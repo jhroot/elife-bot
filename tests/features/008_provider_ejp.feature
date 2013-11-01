@@ -51,3 +51,18 @@ Feature: Use EJP data provider
     | tmp           | ejp_author_file | test_data/ejp_author_file.csv | 00003  | None | 3
     | tmp           | ejp_author_file | test_data/ejp_author_file.csv | 00003  | True | 1
     | tmp           | ejp_author_file | test_data/ejp_author_file.csv | 13     | True | 2
+    
+  Scenario: Get the S3 key name for the latest file given bucket JSON data
+    Given I have a tmp_base_dir <tmp_base_dir>
+    And I have file type <file_type>
+    And I have a document <document>
+    And I get JSON from the document
+    And I parse the JSON string
+    And I create a ejp provider
+    When I find latest s3 file name using ejp
+    Then I have s3 file name <s3_file_name>
+
+  Examples:
+    | tmp_base_dir  | file_type | document                       | s3_file_name
+    | tmp           | author    | test_data/ejp_bucket_list.json | ejp_query_tool_query_id_152_15a)_Accepted_Paper_Details_2013_10_31_eLife.csv
+    | tmp           | editor    | test_data/ejp_bucket_list.json | ejp_query_tool_query_id_158_15b)_Accepted_Paper_Details_2013_10_31_eLife.csv
