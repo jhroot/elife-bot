@@ -89,3 +89,21 @@ def i_find_latest_s3_file_name_using_ejp(step):
 def i_have_s3_file_name_s3_file_name(step, s3_file_name):
   assert world.s3_file_name == s3_file_name, \
     "Got s3_file_name %s " % world.s3_file_name
+  
+@step('I parse editor file the document with ejp')
+def i_parse_editor_file_the_document_with_ejp(step):
+  (world.column_headings, world.editor_rows) = world.ejp.parse_editor_file(world.document, world.filename)
+  assert world.ejp.fs.document is not None, \
+    "Got document %s" % world.ejp.fs.document
+    
+@step('I get the editors from ejp')
+def i_get_the_editors_from_ejp(step):
+  
+  (world.column_headings, world.editors) = world.ejp.get_editors(world.doi_id, world.document)
+  assert world.editors is not None, \
+    "Got editors %s" % world.editors
+
+@step('I have the editors count (\d+)')
+def i_have_the_editors_count(step, count):
+  assert len(world.editors) == int(count), \
+    "Got count %s " % len(world.editors)

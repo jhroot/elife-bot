@@ -152,13 +152,13 @@ class EJP(object):
     
     if(author_rows):
       for a in author_rows:
-        add_author = True
+        add = True
         # Check doi_id column value
         if(doi_id is not None):
           if(int(doi_id) != int(a[0])):
-            add_author = False
+            add = False
         # Check corresponding column value
-        if(corresponding and add_author is True):
+        if(corresponding and add is True):
           
           author_type_cde = a[5]
           dual_corr_author_ind = a[6]
@@ -167,14 +167,14 @@ class EJP(object):
           if(corresponding is True):
             # If not a corresponding author, drop it
             if(is_corr is not True):
-              add_author = False
+              add = False
           elif(corresponding is False):
             # If is a corresponding author, drop it
             if(is_corr is True):
-              add_author = False
+              add = False
               
         # Finish up, add the author if we should
-        if(add_author is True):
+        if(add is True):
           authors.append(a)
 
     if(len(authors) <= 0):
@@ -196,6 +196,88 @@ class EJP(object):
       is_corr = False
       
     return is_corr
+  
+  def parse_editor_file(self, document, filename = None):
+    """
+    Given a filename to an author file, download
+    or copy it using the filesystem provider,
+    then parse it
+    """
+
+    if(self.fs is None):
+      self.fs = self.get_fs()
+    
+    # Save the document to the tmp_dir
+    self.fs.write_document_to_tmp_dir(document, filename)
+
+    (column_headings, editor_rows) = self.parse_editor_data(self.fs.document)
+    
+    return (column_headings, editor_rows)
+  
+  def parse_editor_data(self, document):
+    """
+    Given editor data - CSV with header rows - parse
+    it and return an object representation
+    """
+    
+    column_headings = None
+    editor_rows = []
+    
+    f = self.fs.open_file_from_tmp_dir(self.fs.document, mode = 'rb')
+
+    filereader = csv.reader(f)
+
+    for row in filereader:
+      # For now throw out header rows
+      if(filereader.line_num <= 3):
+        pass
+      elif(filereader.line_num == 4):
+        # Column headers
+        column_headings = row
+      else:
+        editor_rows.append(row)
+
+    return (column_headings, editor_rows)
+  
+  def get_editors(self, doi_id = None, document = None):
+    """
+    Get a list of editors for an article
+      If doi_id is None, return all editors
+      If document is None, find the most recent editors file
+    """
+    editors = []
+    # Check for the document
+    if(document is None):
+      # No document? Find it on S3, save the content to
+      #  the tmp_dir
+      if(self.fs is None):
+        self.fs = self.get_fs()
+      s3_key_name = self.find_latest_s3_file_name(file_type = "editor")
+      s3_key = self.get_s3key(s3_key_name)
+      contents = s3_key.get_contents_as_string()
+      self.fs.write_content_to_document(contents, self.author_default_filename)
+      document = self.fs.get_document
+    
+    # Parse the file
+    filename = self.editor_default_filename
+    (column_headings, editor_rows) = self.parse_editor_file(document, filename)
+    
+    if(editor_rows):
+      for a in editor_rows:
+        add = True
+        # Check doi_id column value
+        if(doi_id is not None):
+          if(int(doi_id) != int(a[0])):
+            add = False
+       
+        # Finish up, add the author if we should
+        if(add is True):
+          editors.append(a)
+
+    if(len(editors) <= 0):
+      editors = None
+    
+    return (column_headings, editors)
     
   def find_latest_s3_file_name(self, file_type, file_list = None):
     """
