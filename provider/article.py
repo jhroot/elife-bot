@@ -140,7 +140,15 @@ class article(object):
         self.fs = self.get_fs()
       # Connect to SimpleDB and get the latest article XML S3 object name
       self.db.connect()
-      s3_key_name = self.db.elife_get_article_S3_file_items(file_data_type = "xml", doi_id = doi_id, latest = True)
+      # Look up the latest XMl file by doi_id, should return a list of 1
+      log_item = self.db.elife_get_article_S3_file_items(file_data_type = "xml", doi_id = doi_id, latest = True)
+      s3_key_name = None
+      
+      try:
+        s3_key_name = log_item[0]["name"]
+      except IndexError:
+        return False
+
       s3_key = self.get_s3key(s3_key_name)
       contents = s3_key.get_contents_as_string()
       self.fs.write_content_to_document(contents, self.default_article_xml_filename)
@@ -180,7 +188,7 @@ class article(object):
     """
     doi_url = self.get_doi_url(doi)
     f = {"text": doi_url}
-    tweet_url ="http://twitter.com/intent/tweet?text=" + urllib.urlencode(f)
+    tweet_url ="http://twitter.com/intent/tweet?" + urllib.urlencode(f)
     return tweet_url
     
   def get_doi_url(self, doi):
