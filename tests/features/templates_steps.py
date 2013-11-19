@@ -42,8 +42,8 @@ def i_save_template_contents_to_tmp_dir_with_templates_provider(step):
   assert world.fs.document is not None, \
     "Got document %s" % world.fs.document
   
-@step('I have the filesystem document (\S+)')
-def i_have_the_filesystem_document_filesystem_document(step, filesystem_document):
+@step('I have the world filesystem document (\S+)')
+def i_have_the_world_filesystem_document(step, filesystem_document):
   assert world.fs.document == filesystem_document, \
     "Got document %s" % world.fs.document
 

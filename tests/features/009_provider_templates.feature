@@ -15,7 +15,7 @@ Feature: Use Templates provider
     When I read the document to content
     And I save template contents to tmp dir with templates provider
     And I get the filesystem document
-    Then I have the filesystem document <filesystem_document>
+    Then I have the world filesystem document <filesystem_document>
 
   Examples:
     | tmp_base_dir  | test_name     | document                              | template_name     | filesystem_document 
