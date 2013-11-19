@@ -52,6 +52,9 @@ class dev():
 	lens_distribution_id = u'E30WWCB2DNEOKI'
 	lens_domain_name = 'd32g8kubfuccxs.cloudfront.net'
 	
+	# Bot S3 settings
+	bot_bucket = 'elife-bot-dev'
+	
 	# EJP S3 settings
 	ejp_bucket = 'elife-ejp-ftp-dev'
 	
@@ -101,6 +104,9 @@ class live():
 	lens_bucket = 'elife-lens'
 	lens_distribution_id = u'EK4HKRQWIF6B3'
 	cdn_domain_name = 'lens.elifesciences.org'
+	
+	# Bot S3 settings
+	bot_bucket = 'elife-bot'
 	
 	# EJP S3 settings
 	ejp_bucket = 'elife-ejp-ftp'
