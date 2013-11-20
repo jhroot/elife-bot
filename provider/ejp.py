@@ -255,7 +255,7 @@ class EJP(object):
       s3_key_name = self.find_latest_s3_file_name(file_type = "editor")
       s3_key = self.get_s3key(s3_key_name)
       contents = s3_key.get_contents_as_string()
-      self.fs.write_content_to_document(contents, self.author_default_filename)
+      self.fs.write_content_to_document(contents, self.editor_default_filename)
       document = self.fs.get_document
     
     # Parse the file
