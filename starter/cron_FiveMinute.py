@@ -59,7 +59,8 @@ class cron_FiveMinute(object):
     #  Only start a workflow if there are emails in the queue ready to send
     item_list = db.elife_get_email_queue_items(
       query_type = "count",
-      date_scheduled_before = last_startDate)
+      date_scheduled_before = last_startDate,
+      sent_status = "null")
 
     try:
       if(int(item_list[0]["Count"]) > 0):
