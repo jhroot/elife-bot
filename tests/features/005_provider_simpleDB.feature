@@ -116,6 +116,7 @@ Feature: Use SimpleDB as a data provider
     | date_added_timestamp | items      | None   | None        | None       | None   | None                     | None               | None              | select * from EmailQueue_dev where sent_status is null and date_added_timestamp is not null order by date_added_timestamp asc
     | None                 | count      | None   | None        | None       | None   | None                     | None               | None              | select count(*) from EmailQueue_dev where sent_status is null
     | None                 | count      | None   | None        | None       | None   | 1970-01-01T00:00:01.000Z | None               | None              | select count(*) from EmailQueue_dev where sent_status is null and date_scheduled_timestamp < '1'
+    | None                 | count      | None   | None        | o'my       | None   | None | None               | None              | select count(*) from EmailQueue_dev where email_type = 'o''my'
     
   Scenario: Get a unique item_name for an email queue SimpleDB object
     Given I have imported a settings module
