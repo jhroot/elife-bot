@@ -49,6 +49,13 @@ class starter_PublishArticle():
         
         document = doc["document"]
         elife_id = doc["elife_id"]
+        
+        # Publication email variables
+        allow_duplicates = False
+        if(ENV == "dev"):
+          # Dev workflow, set the default to allow duplicate emails
+          allow_duplicates = True
+        doc["allow_duplicates"] = allow_duplicates
     
         id_string = elife_id
     
