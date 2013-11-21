@@ -62,7 +62,7 @@ class activity_PublicationEmail(activity.activity):
     
     elife_id = data["data"]["elife_id"]
     # Check for whether the workflow execution was told to allow duplicate emails
-    #  defautl is False
+    #  default is False
     allow_duplicates = False
     try:
       allow_duplicates = data["data"]["allow_duplicates"]
@@ -75,90 +75,95 @@ class activity_PublicationEmail(activity.activity):
     if(self.templates.email_templates_warmed is not True):
       if(self.logger):
         self.logger.info('PublicationEmail email templates did not warm successfully')
+      # Stop now! Return False if we do not have the necessary files
+      return False
     else:
       if(self.logger):
         self.logger.info('PublicationEmail email templates warmed')
-      
-      article = self.article.get_article_data(doi_id = elife_id)
-      
-      # Get the article published date timestamp
-      pub_date_timestamp = None
-      date_scheduled_timestamp = 0
-      try:
-        pub_date_timestamp = self.article.pub_date_timestamp
-        date_scheduled_timestamp = pub_date_timestamp
-      except:
-        pass
-      
-      # First send author emails
-      authors = self.get_authors(doi_id = elife_id)
+    
+    # Get and parse the article XML for data
+    article = self.article.get_article_data(doi_id = elife_id)
+    
+    # Get the article published date timestamp
+    pub_date_timestamp = None
+    date_scheduled_timestamp = 0
+    try:
+      pub_date_timestamp = self.article.pub_date_timestamp
+      date_scheduled_timestamp = pub_date_timestamp
+    except:
+      pass
+    
+    # Ready to format emails and queue them
+    
+    # First send author emails
+    authors = self.get_authors(doi_id = elife_id)
 
-      for author in authors:
+    for author in authors:
 
-        headers = self.templates.get_author_publication_email_headers(
-          author = author,
-          article = self.article,
-          elife = self.elife,
-          format = "html")
-        
-        # Duplicate email check, can bypass with allow_duplicates = True
-        if(allow_duplicates is True):
-          duplicate = False
-        else:
-          duplicate = self.is_duplicate_email(
-            doi_id          = elife_id,
-            email_type      = headers["email_type"],
-            recipient_email = author.e_mail)
-        
-        if(duplicate is True):
-          if(self.logger):
-            self.logger.info('Duplicate email: doi_id: %s email_type: %s recipient_email: %s' % (elife_id, headers["email_type"], author.e_mail))
-            
-        elif(duplicate is False):
-          # Queue the email
-          self.queue_author_email(
-            author  = author,
-            headers = headers,
-            article = self.article,
-            elife   = self.elife,
-            doi_id  = elife_id,
-            date_scheduled_timestamp = date_scheduled_timestamp,
-            format  = "html")
-          
-      # Second send editor emails
-      editors = self.get_editors(doi_id = elife_id)
+      headers = self.templates.get_author_publication_email_headers(
+        author = author,
+        article = self.article,
+        elife = self.elife,
+        format = "html")
       
-      for editor in editors:
+      # Duplicate email check, can bypass with allow_duplicates = True
+      if(allow_duplicates is True):
+        duplicate = False
+      else:
+        duplicate = self.is_duplicate_email(
+          doi_id          = elife_id,
+          email_type      = headers["email_type"],
+          recipient_email = author.e_mail)
       
-        headers = self.templates.get_editor_publication_email_headers(
-          editor = editor,
-          article = self.article,
-          elife = self.elife,
-          format = "html")
-        
-        # Duplicate email check, can bypass with allow_duplicates = True
-        if(allow_duplicates is True):
-          duplicate = False
-        else:
-          duplicate = self.is_duplicate_email(
-            doi_id          = elife_id,
-            email_type      = headers["email_type"],
-            recipient_email = editor.e_mail)
-        
-        if(duplicate is True):
-          if(self.logger):
-            self.logger.info('Duplicate email: doi_id: %s email_type: %s recipient_email: %s' % (elife_id, headers["email_type"], editor.e_mail))
+      if(duplicate is True):
+        if(self.logger):
+          self.logger.info('Duplicate email: doi_id: %s email_type: %s recipient_email: %s' % (elife_id, headers["email_type"], author.e_mail))
           
-        elif(duplicate is False):
-          # Queue the email
-          self.queue_editor_email(
-            editor  = editor,
-            headers = headers,
-            article = self.article,
-            elife   = self.elife,
-            doi_id  = elife_id,
-            date_scheduled_timestamp = date_scheduled_timestamp,
-            format  = "html")
+      elif(duplicate is False):
+        # Queue the email
+        self.queue_author_email(
+          author  = author,
+          headers = headers,
+          article = self.article,
+          elife   = self.elife,
+          doi_id  = elife_id,
+          date_scheduled_timestamp = date_scheduled_timestamp,
+          format  = "html")
+        
+    # Second send editor emails
+    editors = self.get_editors(doi_id = elife_id)
+    
+    for editor in editors:
+    
+      headers = self.templates.get_editor_publication_email_headers(
+        editor = editor,
+        article = self.article,
+        elife = self.elife,
+        format = "html")
+      
+      # Duplicate email check, can bypass with allow_duplicates = True
+      if(allow_duplicates is True):
+        duplicate = False
+      else:
+        duplicate = self.is_duplicate_email(
+          doi_id          = elife_id,
+          email_type      = headers["email_type"],
+          recipient_email = editor.e_mail)
+      
+      if(duplicate is True):
+        if(self.logger):
+          self.logger.info('Duplicate email: doi_id: %s email_type: %s recipient_email: %s' % (elife_id, headers["email_type"], editor.e_mail))
+        
+      elif(duplicate is False):
+        # Queue the email
+        self.queue_editor_email(
+          editor  = editor,
+          headers = headers,
+          article = self.article,
+          elife   = self.elife,
+          doi_id  = elife_id,
+          date_scheduled_timestamp = date_scheduled_timestamp,
+          format  = "html")
           
     return True
   
