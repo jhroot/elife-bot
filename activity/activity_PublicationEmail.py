@@ -61,6 +61,14 @@ class activity_PublicationEmail(activity.activity):
     current_timestamp = calendar.timegm(current_time)
     
     elife_id = data["data"]["elife_id"]
+    # Check for whether the workflow execution was told to allow duplicate emails
+    #  defautl is False
+    allow_duplicates = False
+    try:
+      allow_duplicates = data["data"]["allow_duplicates"]
+    except KeyError:
+      # Not specified? Ok, just use the default
+      pass
     
     # Prepare email templates
     self.templates.download_email_templates_from_s3()
@@ -93,15 +101,17 @@ class activity_PublicationEmail(activity.activity):
           elife = self.elife,
           format = "html")
         
-        # Duplicate email check
-        duplicate = self.is_duplicate_email(
-          doi_id          = elife_id,
-          email_type      = headers["email_type"],
-          recipient_email = author.e_mail)
+        # Duplicate email check, can bypass with allow_duplicates = True
+        if(allow_duplicates is True):
+          duplicate = False
+        else:
+          duplicate = self.is_duplicate_email(
+            doi_id          = elife_id,
+            email_type      = headers["email_type"],
+            recipient_email = author.e_mail)
         
         if(duplicate is True):
           if(self.logger):
-            self.logger.info('Duplicate email:')
             self.logger.info('Duplicate email: doi_id: %s email_type: %s recipient_email: %s' % (elife_id, headers["email_type"], author.e_mail))
             
         elif(duplicate is False):
@@ -126,11 +136,14 @@ class activity_PublicationEmail(activity.activity):
           elife = self.elife,
           format = "html")
         
-        # Duplicate email check
-        duplicate = self.is_duplicate_email(
-          doi_id          = elife_id,
-          email_type      = headers["email_type"],
-          recipient_email = author.e_mail)
+        # Duplicate email check, can bypass with allow_duplicates = True
+        if(allow_duplicates is True):
+          duplicate = False
+        else:
+          duplicate = self.is_duplicate_email(
+            doi_id          = elife_id,
+            email_type      = headers["email_type"],
+            recipient_email = editor.e_mail)
         
         if(duplicate is True):
           if(self.logger):
