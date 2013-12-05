@@ -22,7 +22,7 @@ The ``PublicationEmail`` activity sends emails to the authors and editors of an 
   ```
   
 1. As part of the workflow steps, ``worker.py`` receives an activityTask token from Amazon SWF with the activity type ``PublicationEmail``.
-1. ``worker.py`` instantiates a ``activity_PublicationEmail`` class (in the ``activity/activity_PublicationEmail.py file) and calls its ``do_activity()`` method.
+1. ``worker.py`` instantiates a ``activity_PublicationEmail`` class (in the ``activity/activity_PublicationEmail.py`` file) and calls its ``do_activity()`` method.
 1. The activity object uses the ``templates.py`` provider to "warm" the email templates. Basically, it connects to the ``templates_bucket`` S3 bucket and downloads the list of objects needed for sending emails and saves them as files to the activity's tmp_dir directory.
 1. The elife provider object supplies the ``submit_url`` and ``facebook_url`` used in templates.
 1. The article provider gets data for the particular article from the latest article XML stored in the ``bucket`` S3 bucket.
@@ -56,7 +56,7 @@ Example headers file: named ``author_publication_email.json``:
   "email_type": "author_publication_email",
   "subject": "{{ author.first_nm }}, Your eLife paper is now online"
 }
-`` `
+```
 
 * ``sender_email`` is the sender, and must be validated with Amazon SES before it can be used as a sender
 * ``email_type`` is used to determine whether duplicate emails exist of this type
