@@ -34,6 +34,8 @@ The ``PublicationEmail`` activity sends emails to the authors and editors of an 
 
 Unsent emails in the ``EmailQueue`` are automatically sent using Amazon SES in batches of 100 every 5 minutes, in normal operation of the eLife bot.
 
+The email will be queued for delivery on the article's publication date. Therefore, if the article's publication date is before today, the emails will effectively be sent immediately; if the article's publication date is after today, the emails will be queued to send at a future date.
+
 At this time, when ``starter/starter_PublishArticle.py`` is run on the ``dev`` environment, ``allow_duplicates`` is set to ``True``. This allows for easy testing on the files in the dev environment.
 
 # Templates and jinja details
