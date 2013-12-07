@@ -107,7 +107,7 @@ class EJP(object):
     column_headings = None
     author_rows = []
     
-    f = self.fs.open_file_from_tmp_dir(self.fs.document, mode = 'rb')
+    f = self.fs.open_file_from_tmp_dir(document, mode = 'rb')
 
     filereader = csv.reader(f)
 
