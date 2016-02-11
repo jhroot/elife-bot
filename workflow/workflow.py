@@ -295,9 +295,10 @@ class workflow(object):
 					d = Layer1Decisions()
 					d.fail_workflow_execution()
 					self.complete_decision(d)
-					return
+					return True
 		except TypeError:
 			pass
+		return False
 
 	def rate_limit_failed_activity(self, decision):
 		"""
@@ -326,7 +327,8 @@ class workflow(object):
 				self.complete_workflow()
 			else:
 				# check if the failed activity signalled a request to fail the workflow
-				self.check_for_failed_workflow_request(self.decision)
+				if self.check_for_failed_workflow_request(self.decision):
+					return True
 				self.rate_limit_failed_activity(self.decision)
 				# 2. Get the next activity
 				next_activities = self.get_next_activities()

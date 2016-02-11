@@ -92,6 +92,7 @@ def work(ENV = "dev"):
 													 activity_task['workflowExecution']['workflowId'],
 													 activity_task['workflowExecution']['runId'])
 								respond_failed(conn, logger, token, detail, reason)
+
 						else:
 							# for legacy actions
 
