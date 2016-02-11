@@ -52,7 +52,7 @@ class activity_ExpandArticle(activity.activity):
         article_id_match = re.match(ur'elife-(.*?)-', filename_last_element)
         if article_id_match is None:
             self.logger.error("Name '%s' did not match expected pattern for article id" % filename_last_element)
-            return False
+            return self.ACTIVITY_PERMANENT_FAILURE
         article_id = article_id_match.group(1)
         session.store_value(self.get_workflowId(), 'article_id', article_id)
 
@@ -68,12 +68,12 @@ class activity_ExpandArticle(activity.activity):
             version = self.get_next_version(article_id)
         if version == '-1':
             self.logger.error("Name '%s' did not match expected pattern for version" % filename_last_element)
-            return False  # version could not be determined, exit workflow. Can't emit event as no version.
+            return self.ACTIVITY_PERMANENT_FAILURE  # version could not be determined, exit workflow. Can't emit event as no version.
 
         status = self.get_status_from_zip_filename(filename_last_element)
         if status is None:
             self.logger.error("Name '%s' did not match expected pattern for status" % filename_last_element)
-            return False  # status could not be determined, exit workflow. Can't emit event as no version.
+            return self.ACTIVITY_PERMANENT_FAILURE  # status could not be determined, exit workflow. Can't emit event as no version.
         
         # Get the run value from the session, if available, otherwise set it
         try:
@@ -140,9 +140,9 @@ class activity_ExpandArticle(activity.activity):
             self.logger.exception("Exception when expanding article")
             self.emit_monitor_event(self.settings, article_id, version, run, "Expand Article", "error",
                                     "Error expanding article " + article_id + " message:" + e.message)
-            return False
+            return self.ACTIVITY_TEMPORARY_FAILURE
 
-        return True
+        return self.ACTIVITY_PERMANENT_FAILURE
 
     def get_next_version(self, article_id):
         url = self.settings.lax_article_versions.replace('{article_id}', article_id)
