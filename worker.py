@@ -88,10 +88,9 @@ def work(ENV = "dev"):
 								# (activitybase.ACTIVITY_PERMANENT_FAILURE)
 								reason = 'error: activity failed with result ' + str(activity_object.result)
 								detail = ''
-								signal_fail_workflow(conn, logger, settings.domain,
+								signal_cancel_workflow(conn, logger, settings.domain,
 													 activity_task['workflowExecution']['workflowId'],
 													 activity_task['workflowExecution']['runId'])
-								respond_failed(conn, logger, token, detail, reason)
 
 						else:
 							# for legacy actions
@@ -213,7 +212,7 @@ def respond_failed(conn, logger, token, details, reason):
 	except boto.exception.SWFResponseError:
 		logger.info('SWFResponseError: SWFResponseError: 400 Bad Request on respond_failed')
 
-def signal_fail_workflow(conn, logger,  domain, workflow_id, run_id):
+def signal_cancel_workflow(conn, logger,  domain, workflow_id, run_id):
 	"""
 	Given an SWF connection and logger as resources,
 	the token to specify an accepted activity, details and a reason
