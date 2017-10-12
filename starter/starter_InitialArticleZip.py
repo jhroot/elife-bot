@@ -13,15 +13,15 @@ import starter_helper as helper
 from starter_helper import NullRequiredDataException
 
 """
-Amazon SWF IngestArticleZip starter, preparing article xml for lax.
+Amazon SWF InitialArticleZip starter
 """
 
 
-class starter_IngestArticleZip():
+class starter_InitialArticleZip():
     def __init__(self):
-        self.const_name = "IngestArticleZip"
+        self.const_name = "InitialArticleZip"
         
-    def start(self, settings, run, info, article_id, version, filename_last_element):
+    def start(self, settings, run, info):
 
         # Log
         logger = helper.get_starter_logger(settings.setLevel, helper.get_starter_identity(self.const_name))
@@ -86,6 +86,6 @@ if __name__ == "__main__":
     import settings as settingsLib
     settings = settingsLib.get_settings(ENV)
 
-    o = starter_IngestArticleZip()
+    o = starter_InitialArticleZip()
 
     o.start(settings=settings,)
